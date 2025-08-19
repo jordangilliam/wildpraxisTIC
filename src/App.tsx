@@ -1,23 +1,89 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
-import { Button } from "@/components/button";
-import { Input } from "@/components/input";
-import { Label } from "@/components/label";
-import { Textarea } from "@/components/textarea";
-import { Switch } from "@/components/switch";
-import { Progress } from "@/components/progress";
-const Badge = ({ children, variant="secondary", className="" }:{ children: React.ReactNode; variant?: string; className?: string }) => (
-  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${variant==='secondary' ? 'bg-slate-100 text-slate-700' : ''} ${className}`}>{children}</span>
-);
+// Inline minimal UI primitives so the single-file preview runs without path aliases
+// (These mirror the components we generated in the repo under src/components/ui/*)
+
+function cn(...xs: Array<string | undefined | false>) { return xs.filter(Boolean).join(" "); }
+
+export function Card({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("rounded-2xl border bg-white text-slate-900 shadow-sm", className)} {...props} />;
+}
+export function CardHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-4 pb-2", className)} {...props} />;
+}
+export function CardTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
+  return <h3 className={cn("text-lg font-semibold", className)} {...props} />;
+}
+export function CardDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
+  return <p className={cn("text-sm text-slate-500", className)} {...props} />;
+}
+export function CardContent({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-4 pt-0", className)} {...props} />;
+}
+export function CardFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
+  return <div className={cn("p-4 pt-0 flex items-center gap-2", className)} {...props} />;
+}
+
+export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> { variant?: "default" | "outline" | "ghost" | "destructive"; size?: "sm" | "md"; }
+const btnBase = "inline-flex items-center justify-center rounded-2xl px-3 py-2 text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500/50";
+const btnVar: Record<string,string> = { default:"bg-sky-600 text-white hover:bg-sky-700", outline:"border border-slate-300 hover:bg-slate-50", ghost:"hover:bg-slate-100", destructive:"bg-red-600 text-white hover:bg-red-700" };
+const btnSize: Record<string,string> = { sm:"text-sm px-3 py-2", md:"text-base px-4 py-2" };
+export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(({ className, variant="default", size="sm", ...props }, ref) => (
+  <button ref={ref} className={cn(btnBase, btnVar[variant], btnSize[size], className)} {...props} />
+));
+Button.displayName = "Button";
+
+export const Input = React.forwardRef<HTMLInputElement, React.InputHTMLAttributes<HTMLInputElement>>(({ className, ...props }, ref) => (
+  <input ref={ref} className={cn("w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/50", className)} {...props} />
+));
+Input.displayName = "Input";
+
+export function Label({ className, ...props }: React.LabelHTMLAttributes<HTMLLabelElement>) { return <label className={cn("text-sm font-medium", className)} {...props} />; }
+
+export const Textarea = React.forwardRef<HTMLTextAreaElement, React.TextareaHTMLAttributes<HTMLTextAreaElement>>(({ className, ...props }, ref) => (
+  <textarea ref={ref} className={cn("w-full rounded-xl border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500/50", className)} {...props} />
+));
+Textarea.displayName = "Textarea";
+
+export function Switch({ checked=false, onCheckedChange, ...props }: { checked?: boolean; onCheckedChange?: (v:boolean)=>void } & React.HTMLAttributes<HTMLButtonElement>) {
+  return (
+    <button role="switch" aria-checked={checked} onClick={() => onCheckedChange && onCheckedChange(!checked)} className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${checked ? "bg-sky-600" : "bg-slate-300"}`} {...props}>
+      <span className={`inline-block h-5 w-5 transform rounded-full bg-white transition ${checked ? "translate-x-5" : "translate-x-1"}`} />
+    </button>
+  );
+}
+
+export function Badge({ className, variant="default", ...props }: React.HTMLAttributes<HTMLSpanElement> & { variant?: "default" | "secondary" }) {
+  const colors = variant === "secondary" ? "bg-slate-100 text-slate-700 border" : "bg-sky-600 text-white";
+  return <span className={cn("inline-flex items-center rounded-full px-2 py-1 text-xs", colors, className)} {...props} />;
+}
+
+export function Progress({ value=0, className="" }: { value?: number; className?: string }) {
+  return (
+    <div className={cn("w-full bg-slate-200 rounded-full", className)}>
+      <div className="bg-sky-600 h-full rounded-full" style={{ width: `${Math.max(0, Math.min(100, value))}%` }} />
+    </div>
+  );
+}
+
+// Minimal tabs implementation
+import * as ReactNS from "react";
+const TabsCtx = ReactNS.createContext<{ value: string; setValue: (v:string)=>void } | null>(null);
+export function Tabs({ value, onValueChange, children, className }: { value: string; onValueChange: (v:string)=>void; children: ReactNS.ReactNode; className?: string }) {
+  return <div className={className}><TabsCtx.Provider value={{ value, setValue: onValueChange }}>{children}</TabsCtx.Provider></div>;
+}
+export function TabsList({ children, className }: { children: ReactNS.ReactNode; className?: string }) {
+  return <div className={cn("inline-flex gap-2 rounded-xl border bg-white p-1", className)}>{children}</div>;
+}
+export function TabsTrigger({ value, children }: { value: string; children: ReactNS.ReactNode }) {
+  const ctx = ReactNS.useContext(TabsCtx)!; const active = ctx.value === value;
+  return (
+    <button onClick={() => ctx.setValue(value)} className={cn("px-3 py-2 rounded-lg text-sm", active ? "bg-sky-600 text-white" : "bg-transparent hover:bg-slate-100")}>{children}</button>
+  );
+}
+export function TabsContent({ value, children, className }: { value: string; children: ReactNS.ReactNode; className?: string }) {
+  const ctx = ReactNS.useContext(TabsCtx)!; if (ctx.value !== value) return null; return <div className={className}>{children}</div>;
+}
 import {
   MapPin,
   Fish as FishIcon,
@@ -45,6 +111,10 @@ import type { Map } from "mapbox-gl";
 // ------------------------------
 const LS_KEY = "tic_app_state_v1";
 const LS_TOKEN = "mapbox_token";
+
+// Public-logo paths (work locally and on GitHub Pages)
+const LOGO_WILD = import.meta.env.BASE_URL + "branding/wildpraxis_transparent.png";
+const LOGO_STRING = import.meta.env.BASE_URL + "branding/string_theory_transparent.png";
 
 function saveState(state: AppState) {
   localStorage.setItem(LS_KEY, JSON.stringify(state));
@@ -246,11 +316,8 @@ export default function TICOpenSourceApp() {
       <header className="sticky top-0 z-40 backdrop-blur bg-white/70 border-b">
         <div className="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <motion.div initial={{ scale: 0.9 }} animate={{ scale: 1 }} transition={{ type: "spring" }}>
-              <div className="h-10 w-10 rounded-2xl bg-sky-600 flex items-center justify-center text-white shadow">
-                <FishIcon className="h-5 w-5" />
-              </div>
-            </motion.div>
+            <img src={LOGO_WILD} alt="WildPraxis logo" className="h-10 w-auto rounded-xl" />
+            <img src={LOGO_STRING} alt="String Theory Solutions logo" className="h-10 w-auto rounded-xl" />
             <div>
               <h1 className="font-semibold leading-tight">Trout in the Classroom — Pittsburgh Watershed</h1>
               <p className="text-sm text-slate-500">Urban Academy · Negley Run + adjacent streams · Open‑source</p>
@@ -319,9 +386,14 @@ export default function TICOpenSourceApp() {
       </main>
 
       <footer className="border-t py-6 mt-10 text-sm text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-2">
-          <div>© {new Date().getFullYear()} Urban Academy · TIC · String Theory Solutions / WildPraxis</div>
+        <div className="max-w-7xl mx-auto px-4 flex flex-wrap items-center justify-between gap-4">
           <div className="flex items-center gap-3">
+            <span>© {new Date().getFullYear()} Urban Academy · TIC</span>
+            <img src={LOGO_WILD} alt="WildPraxis" className="h-6 w-auto" />
+            <img src={LOGO_STRING} alt="String Theory Solutions" className="h-6 w-auto" />
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="hidden sm:inline text-slate-400">Partners: Trout Unlimited · DCNR · PFBC</span>
             <Badge variant="secondary">Open‑source</Badge>
             <a className="underline" href="#" onClick={(e)=>{e.preventDefault(); download("LICENSE.txt", MIT_LICENSE)}}>MIT License</a>
           </div>
@@ -979,7 +1051,30 @@ function CareersAndOpportunities({ state, setState }: { state: AppState; setStat
 }
 
 function simulateWeeklySync(setState: React.Dispatch<React.SetStateAction<AppState>>) {
-  setState((s) => ({ ...s, opportunities: dedupe([...SAMPLE_OPPORTUNITIES, ...s.opportunities]), lastOpptySync: new Date().toISOString() }));
+  (async () => {
+    try {
+      const url = import.meta.env.BASE_URL + "data/opportunities.json";
+      const res = await fetch(url, { cache: "no-cache" });
+      if (res.ok) {
+        const items = await res.json();
+        const arr = Array.isArray(items) ? items : (items.items || []);
+        setState((s) => ({
+          ...s,
+          opportunities: dedupe([...arr, ...s.opportunities]),
+          lastOpptySync: new Date().toISOString(),
+        }));
+        return;
+      }
+    } catch (e) {
+      console.warn("Weekly sync fallback:", e);
+    }
+    // Fallback to bundled demo data if fetch fails
+    setState((s) => ({
+      ...s,
+      opportunities: dedupe([...SAMPLE_OPPORTUNITIES, ...s.opportunities]),
+      lastOpptySync: new Date().toISOString(),
+    }));
+  })();
 }
 function dedupe(arr: Opportunity[]) {
   const map = new Map(arr.map((x) => [x.id, x]));
