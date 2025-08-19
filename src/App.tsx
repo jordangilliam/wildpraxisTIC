@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import {
-  Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle
-} from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/card";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/tabs";
+import { Button } from "@/components/button";
+import { Input } from "@/components/input";
+import { Label } from "@/components/label";
+import { Textarea } from "@/components/textarea";
+import { Switch } from "@/components/switch";
+import { Progress } from "@/components/progress";
+// add this simple badge since none exists
+const Badge = ({ children, variant="secondary", className="" }:{ children: React.ReactNode; variant?: string; className?: string }) => (
+  <span className={`inline-flex items-center rounded-full px-2 py-1 text-xs ${variant==='secondary' ? 'bg-slate-100 text-slate-700' : ''} ${className}`}>{children}</span>
+);
 import {
   MapPin, Fish as FishIcon, BookOpenCheck, Microscope, Settings,
   BarChart3, Upload, FileDown, Waves, BadgeCheck, RefreshCw, ChevronRight, Plus, Star,
